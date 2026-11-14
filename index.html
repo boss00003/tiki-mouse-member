@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIKI MOUSE | Member System</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#101010;color:#eee;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:#191919;padding:20px 5%;
+ border-bottom:1px solid #806a37;
+ display:flex;justify-content:space-between;
+ align-items:center;
+}
+.logo{font-size:23px;font-weight:bold;color:#d9b76c}
+.container{max-width:1100px;margin:35px auto;padding:20px}
+.card{
+ background:#1b1b1b;border:1px solid #39332a;
+ border-radius:12px;padding:25px;margin-bottom:20px;
+}
+h2{color:#d9b76c}
+input,button{
+ width:100%;padding:13px;margin:8px 0;
+ border-radius:7px;font-size:15px;
+}
+input{background:#101010;color:white;border:1px solid #555}
+button{
+ background:#b8954e;color:#111;font-weight:bold;
+ border:0;cursor:pointer;
+}
+button:hover{background:#d9b76c}
+.stats{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+ gap:15px;
+}
+.stat{background:#25231f;padding:20px;border-radius:10px}
+.stat strong{display:block;font-size:26px;color:#d9b76c;margin-top:10px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #444;text-align:left}
+.hidden{display:none}
+#message{color:#e8c477;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="logo">TIKI MOUSE</div>
+ <div>MEMBER MANAGEMENT</div>
+</header>
+
+<div class="container">
+
+<section id="login" class="card" style="max-width:450px;margin:60px auto">
+ <h2>เข้าสู่ระบบ</h2>
+ <p>ระบบจัดการสมาชิก Tiki Mouse</p>
+ <input id="email" type="email" placeholder="อีเมล">
+ <input id="password" type="password" placeholder="รหัสผ่าน">
+ <button onclick="login()">เข้าสู่ระบบ</button>
+ <p id="message"></p>
+</section>
+
+<section id="dashboard" class="hidden">
+ <div class="card">
+  <h2>Welcome to TIKI MOUSE</h2>
+  <p>ระบบบริหารจัดการสมาชิกออนไลน์</p>
+  <button onclick="logout()">ออกจากระบบ</button>
+ </div>
+
+ <div class="stats">
+  <div class="stat">สมาชิกทั้งหมด<strong id="members">-</strong></div>
+  <div class="stat">กระเป๋าสมาชิก<strong id="wallets">-</strong></div>
+  <div class="stat">รายการธุรกรรม<strong id="transactions">-</strong></div>
+ </div>
+
+ <div class="card">
+  <h2>รายชื่อสมาชิก</h2>
+  <div style="overflow-x:auto">
+   <table>
+    <thead>
+     <tr><th>รหัสสมาชิก</th><th>ชื่อสมาชิก</th><th>เบอร์โทรศัพท์</th><th>สถานะ</th></tr>
+    </thead>
+    <tbody id="memberList">
+     <tr><td colspan="4">กำลังโหลดข้อมูล...</td></tr>
+    </tbody>
+   </table>
+  </div>
+ </div>
+ <p id="dashboardMessage"></p>
+</section>
+
+</div>
+
+<script>
+const SUPABASE_URL =
+'https://zdlvxmwrexmoczbsagbm.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_ZX1kCEuRDmqkVYaKan9cBw_6rrKzq7T';
+
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+async function login(){
+ const email=document.getElementById('email').value.trim();
+ const password=document.getElementById('password').value;
+ const msg=document.getElementById('message');
+
+ if(!email || !password){
+  msg.textContent='กรุณากรอกอีเมลและรหัสผ่าน';
+  return;
+ }
+
+ msg.textContent='กำลังเข้าสู่ระบบ...';
+
+ const {data,error}=await db.auth.signInWithPassword({
+  email,password
+ });
+
+ if(error){
+  msg.textContent='เข้าสู่ระบบไม่สำเร็จ: '+error.message;
+  return;
+ }
+
+ showDashboard();
+}
+
+async function logout(){
+ await db.auth.signOut();
+ document.getElementById('dashboard').classList.add('hidden');
+ document.getElementById('login').classList.remove('hidden');
+}
+
+async function showDashboard(){
+ document.getElementById('login').classList.add('hidden');
+ document.getElementById('dashboard').classList.remove('hidden');
+
+ const msg=document.getElementById('dashboardMessage');
+ msg.textContent='กำลังโหลดข้อมูล...';
+
+ const [m,w,t]=await Promise.all([
+  db.from('members').select('*',{count:'exact',head:true}),
+  db.from('wallets').select('*',{count:'exact',head:true}),
+  db.from('transactions').select('*',{count:'exact',head:true})
+ ]);
+
+ if(m.error || w.error || t.error){
+  msg.textContent='ไม่สามารถอ่านข้อมูลได้ กรุณาตรวจสอบสิทธิ์ RLS';
+  return;
+ }
+
+ document.getElementById('members').textContent=m.count??0;
+ document.getElementById('wallets').textContent=w.count??0;
+ document.getElementById('transactions').textContent=t.count??0;
+
+ const {data,error}=await db.from('members')
+  .select('member_no,full_name,phone,status')
+  .order('created_at',{ascending:false})
+  .limit(50);
+
+ if(error){
+  msg.textContent='ไม่สามารถโหลดรายชื่อสมาชิก: '+error.message;
+  return;
+ }
+
+ document.getElementById('memberList').innerHTML='';
+
+ data.forEach(member=>{
+  const tr=document.createElement('tr');
+  [member.member_no,member.full_name,member.phone,member.status]
+   .forEach(value=>{
+    const td=document.createElement('td');
+    td.textContent=value??'-';
+    tr.appendChild(td);
+   });
+  document.getElementById('memberList').appendChild(tr);
+ });
+
+ msg.textContent='เชื่อมต่อฐานข้อมูลสำเร็จ';
+}
+
+db.auth.getSession().then(({data})=>{
+ if(data.session) showDashboard();
+});
+
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==='SIGNED_OUT'){
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+ }
+});
+</script>
+</body>
+</html>
