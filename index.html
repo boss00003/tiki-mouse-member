@@ -3,48 +3,44 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TIKI MOUSE | Member System</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;background:#101010;color:#eee;
- font-family:Arial,sans-serif;
-}
-header{
- background:#191919;padding:20px 5%;
- border-bottom:1px solid #806a37;
- display:flex;justify-content:space-between;
- align-items:center;
-}
+body{margin:0;background:#101010;color:#eee;font-family:Arial,sans-serif}
+header{background:#191919;padding:18px 5%;border-bottom:1px solid #b8954e;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .logo{font-size:23px;font-weight:bold;color:#d9b76c}
-.container{max-width:1100px;margin:35px auto;padding:20px}
-.card{
- background:#1b1b1b;border:1px solid #39332a;
- border-radius:12px;padding:25px;margin-bottom:20px;
-}
-h2{color:#d9b76c}
-input,button{
- width:100%;padding:13px;margin:8px 0;
- border-radius:7px;font-size:15px;
-}
-input{background:#101010;color:white;border:1px solid #555}
-button{
- background:#b8954e;color:#111;font-weight:bold;
- border:0;cursor:pointer;
-}
+.container{max-width:1200px;margin:25px auto;padding:15px}
+.card{background:#1b1b1b;border:1px solid #39332a;border-radius:12px;padding:22px;margin-bottom:18px}
+h2{color:#d9b76c;margin-top:0}
+input,select,textarea{width:100%;padding:12px;margin:7px 0;background:#101010;color:white;border:1px solid #555;border-radius:7px;font-size:15px}
+button{padding:12px 17px;background:#b8954e;color:#111;font-weight:bold;border:0;border-radius:7px;cursor:pointer;margin:5px 3px}
 button:hover{background:#d9b76c}
-.stats{
- display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
- gap:15px;
-}
-.stat{background:#25231f;padding:20px;border-radius:10px}
-.stat strong{display:block;font-size:26px;color:#d9b76c;margin-top:10px}
-table{width:100%;border-collapse:collapse}
+button.secondary{background:#444;color:white}
+button.danger{background:#8c3939;color:white}
+.hidden{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0}
+.stat{background:#25231f;padding:18px;border-radius:10px}
+.stat strong{display:block;font-size:25px;color:#d9b76c;margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}
+table{width:100%;border-collapse:collapse;min-width:650px}
 th,td{padding:12px;border-bottom:1px solid #444;text-align:left}
-.hidden{display:none}
-#message{color:#e8c477;white-space:pre-wrap}
+th{color:#d9b76c}
+.table-wrap{overflow-x:auto}
+#message,.msg{color:#e8c477;white-space:pre-wrap}
+.member-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#333}
+.small{font-size:13px;color:#aaa}
+.actions{display:flex;flex-wrap:wrap;gap:5px}
+label{display:block;margin-top:8px;color:#ccc}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#preview{width:100px;height:100px;object-fit:cover;border-radius:10px;display:none}
+@media(max-width:600px){
+ header{padding:15px}
+ .logo{font-size:19px}
+ .container{padding:10px}
+ .card{padding:15px}
+}
 </style>
 </head>
 <body>
@@ -56,47 +52,141 @@ th,td{padding:12px;border-bottom:1px solid #444;text-align:left}
 
 <div class="container">
 
-<section id="login" class="card" style="max-width:450px;margin:60px auto">
+<!-- LOGIN -->
+<section id="login" class="card" style="max-width:440px;margin:65px auto">
  <h2>เข้าสู่ระบบ</h2>
- <p>ระบบจัดการสมาชิก Tiki Mouse</p>
- <input id="email" type="email" placeholder="อีเมล">
- <input id="password" type="password" placeholder="รหัสผ่าน">
- <button onclick="login()">เข้าสู่ระบบ</button>
+ <p>ระบบจัดการสมาชิก TIKI MOUSE</p>
+ <label>อีเมล</label>
+ <input id="email" type="email" placeholder="กรอกอีเมล">
+ <label>รหัสผ่าน</label>
+ <input id="password" type="password" placeholder="กรอกรหัสผ่าน">
+ <button style="width:100%" onclick="login()">เข้าสู่ระบบ</button>
  <p id="message"></p>
 </section>
 
+<!-- DASHBOARD -->
 <section id="dashboard" class="hidden">
- <div class="card">
-  <h2>Welcome to TIKI MOUSE</h2>
-  <p>ระบบบริหารจัดการสมาชิกออนไลน์</p>
-  <button onclick="logout()">ออกจากระบบ</button>
+
+ <div class="card topline">
+  <div>
+   <h2 style="margin-bottom:5px">TIKI MOUSE MEMBER</h2>
+   <span class="small" id="userEmail"></span>
+  </div>
+  <button class="danger" onclick="logout()">ออกจากระบบ</button>
  </div>
 
  <div class="stats">
-  <div class="stat">สมาชิกทั้งหมด<strong id="members">-</strong></div>
-  <div class="stat">กระเป๋าสมาชิก<strong id="wallets">-</strong></div>
-  <div class="stat">รายการธุรกรรม<strong id="transactions">-</strong></div>
+  <div class="stat">สมาชิกทั้งหมด<strong id="memberCount">0</strong></div>
+  <div class="stat">ยอดเครดิตรวม<strong id="totalBalance">0.00</strong></div>
+  <div class="stat">ธุรกรรมทั้งหมด<strong id="transactionCount">0</strong></div>
  </div>
 
+ <!-- ADD MEMBER -->
+ <div class="card">
+  <h2>+ เพิ่มสมาชิกใหม่</h2>
+  <div class="grid">
+   <div>
+    <label>รหัสสมาชิก</label>
+    <input id="memberNo" placeholder="เช่น TIKI0001">
+   </div>
+   <div>
+    <label>ชื่อ - นามสกุล</label>
+    <input id="fullName" placeholder="ชื่อสมาชิก">
+   </div>
+   <div>
+    <label>เบอร์โทรศัพท์</label>
+    <input id="phone" placeholder="เบอร์โทรศัพท์">
+   </div>
+   <div>
+    <label>ระดับสมาชิก</label>
+    <select id="tier">
+     <option value="">กำลังโหลดระดับสมาชิก...</option>
+    </select>
+   </div>
+   <div>
+    <label>รูปภาพสมาชิก</label>
+    <input id="photo" type="file" accept="image/png,image/jpeg,image/webp">
+    <img id="preview" alt="รูปตัวอย่าง">
+   </div>
+  </div>
+  <button onclick="addMember()">บันทึกสมาชิก</button>
+  <p id="addMessage" class="msg"></p>
+ </div>
+
+ <!-- SEARCH -->
  <div class="card">
   <h2>รายชื่อสมาชิก</h2>
-  <div style="overflow-x:auto">
+  <input id="search" placeholder="ค้นหาชื่อ รหัสสมาชิก หรือเบอร์โทรศัพท์" oninput="renderMembers()">
+  <div class="table-wrap">
    <table>
     <thead>
-     <tr><th>รหัสสมาชิก</th><th>ชื่อสมาชิก</th><th>เบอร์โทรศัพท์</th><th>สถานะ</th></tr>
+     <tr>
+      <th>รูป</th>
+      <th>รหัสสมาชิก</th>
+      <th>ชื่อสมาชิก</th>
+      <th>เบอร์โทรศัพท์</th>
+      <th>ระดับ</th>
+      <th>ยอดเงิน</th>
+      <th>จัดการ</th>
+     </tr>
     </thead>
     <tbody id="memberList">
-     <tr><td colspan="4">กำลังโหลดข้อมูล...</td></tr>
+     <tr><td colspan="7">กำลังโหลด...</td></tr>
+    </tbody>
+   </table>
+  </div>
+  <p id="listMessage" class="msg"></p>
+ </div>
+
+ <!-- WALLET -->
+ <div class="card">
+  <h2>เติมเงิน / ตัดเงินสมาชิก</h2>
+  <label>เลือกสมาชิก</label>
+  <select id="walletMember">
+   <option value="">เลือกสมาชิก</option>
+  </select>
+  <label>ประเภท</label>
+  <select id="transactionType">
+   <option value="topup">เติมเครดิต</option>
+   <option value="spend">ใช้เครดิต</option>
+  </select>
+  <label>จำนวนเงิน (บาท)</label>
+  <input id="amount" type="number" min="0.01" step="0.01" placeholder="0.00">
+  <label>หมายเหตุ</label>
+  <input id="note" placeholder="รายละเอียดรายการ">
+  <button onclick="postTransaction()">บันทึกธุรกรรม</button>
+  <p id="walletMessage" class="msg"></p>
+ </div>
+
+ <!-- HISTORY -->
+ <div class="card">
+  <h2>ประวัติธุรกรรมล่าสุด</h2>
+  <div class="table-wrap">
+   <table>
+    <thead>
+     <tr>
+      <th>วันที่</th>
+      <th>รหัสสมาชิก</th>
+      <th>ประเภท</th>
+      <th>จำนวนเงิน</th>
+      <th>ยอดก่อน</th>
+      <th>ยอดหลัง</th>
+      <th>หมายเหตุ</th>
+     </tr>
+    </thead>
+    <tbody id="historyList">
+     <tr><td colspan="7">กำลังโหลด...</td></tr>
     </tbody>
    </table>
   </div>
  </div>
- <p id="dashboardMessage"></p>
-</section>
 
+ <p id="dashboardMessage" class="msg"></p>
+</section>
 </div>
 
 <script>
+// SUPABASE CONNECTION
 const SUPABASE_URL =
 'https://zdlvxmwrexmoczbsagbm.supabase.co';
 
@@ -108,92 +198,398 @@ const db = window.supabase.createClient(
  SUPABASE_KEY
 );
 
+const BUCKET = 'member-documents';
+
+let membersData = [];
+let tiersData = [];
+let walletsData = {};
+let currentUser = null;
+
+const $ = id => document.getElementById(id);
+
+function money(n){
+ return Number(n || 0).toLocaleString('th-TH',{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+ });
+}
+
+function message(id,text){
+ $(id).textContent=text;
+}
+
+// LOGIN
 async function login(){
- const email=document.getElementById('email').value.trim();
- const password=document.getElementById('password').value;
- const msg=document.getElementById('message');
+ const email=$('email').value.trim();
+ const password=$('password').value;
 
  if(!email || !password){
-  msg.textContent='กรุณากรอกอีเมลและรหัสผ่าน';
+  message('message','กรุณากรอกอีเมลและรหัสผ่าน');
   return;
  }
 
- msg.textContent='กำลังเข้าสู่ระบบ...';
+ message('message','กำลังเข้าสู่ระบบ...');
 
  const {data,error}=await db.auth.signInWithPassword({
   email,password
  });
 
  if(error){
-  msg.textContent='เข้าสู่ระบบไม่สำเร็จ: '+error.message;
+  message('message','เข้าสู่ระบบไม่สำเร็จ: '+error.message);
   return;
  }
 
- showDashboard();
+ currentUser=data.user;
+ await showDashboard();
 }
 
+// LOGOUT
 async function logout(){
  await db.auth.signOut();
- document.getElementById('dashboard').classList.add('hidden');
- document.getElementById('login').classList.remove('hidden');
+ currentUser=null;
+ $('dashboard').classList.add('hidden');
+ $('login').classList.remove('hidden');
 }
 
+// START DASHBOARD
 async function showDashboard(){
- document.getElementById('login').classList.add('hidden');
- document.getElementById('dashboard').classList.remove('hidden');
+ $('login').classList.add('hidden');
+ $('dashboard').classList.remove('hidden');
+ $('userEmail').textContent=currentUser?.email || '';
 
- const msg=document.getElementById('dashboardMessage');
- msg.textContent='กำลังโหลดข้อมูล...';
+ message('dashboardMessage','กำลังตรวจสอบสิทธิ์...');
+
+ const {data:staff,error:staffError}=await db.rpc('is_staff');
+
+ if(staffError || staff!==true){
+  message('dashboardMessage',
+   'บัญชีนี้ยังไม่มีสิทธิ์พนักงาน กรุณาตรวจสอบตาราง staff_roles');
+  return;
+ }
+
+ await loadTiers();
+ await refreshData();
+}
+
+// LOAD MEMBERSHIP TIERS
+async function loadTiers(){
+ const {data,error}=await db.from('membership_tiers')
+  .select('id,code,name,min_topup')
+  .order('min_topup');
+
+ if(error){
+  message('dashboardMessage','โหลดระดับสมาชิกไม่สำเร็จ: '+error.message);
+  return;
+ }
+
+ tiersData=data || [];
+
+ $('tier').innerHTML='<option value="">เลือกระดับสมาชิก</option>';
+
+ tiersData.forEach(t=>{
+  const op=document.createElement('option');
+  op.value=t.id;
+  op.textContent=t.name+' ('+money(t.min_topup)+' บาท)';
+  $('tier').appendChild(op);
+ });
+}
+
+// REFRESH ALL DATA
+async function refreshData(){
+ message('dashboardMessage','กำลังโหลดข้อมูล...');
 
  const [m,w,t]=await Promise.all([
-  db.from('members').select('*',{count:'exact',head:true}),
-  db.from('wallets').select('*',{count:'exact',head:true}),
-  db.from('transactions').select('*',{count:'exact',head:true})
+  db.from('members').select('*').order('member_no'),
+  db.from('wallets').select('member_id,balance'),
+  db.from('transactions')
+   .select('id,member_id,transaction_type,amount,balance_before,balance_after,note,created_at')
+   .order('created_at',{ascending:false})
+   .limit(50)
  ]);
 
  if(m.error || w.error || t.error){
-  msg.textContent='ไม่สามารถอ่านข้อมูลได้ กรุณาตรวจสอบสิทธิ์ RLS';
+  message('dashboardMessage',
+   'โหลดข้อมูลไม่สำเร็จ: '+(m.error?.message || w.error?.message || t.error?.message));
   return;
  }
 
- document.getElementById('members').textContent=m.count??0;
- document.getElementById('wallets').textContent=w.count??0;
- document.getElementById('transactions').textContent=t.count??0;
+ membersData=m.data || [];
+ walletsData={};
 
- const {data,error}=await db.from('members')
-  .select('member_no,full_name,phone,status')
-  .order('created_at',{ascending:false})
-  .limit(50);
-
- if(error){
-  msg.textContent='ไม่สามารถโหลดรายชื่อสมาชิก: '+error.message;
-  return;
- }
-
- document.getElementById('memberList').innerHTML='';
-
- data.forEach(member=>{
-  const tr=document.createElement('tr');
-  [member.member_no,member.full_name,member.phone,member.status]
-   .forEach(value=>{
-    const td=document.createElement('td');
-    td.textContent=value??'-';
-    tr.appendChild(td);
-   });
-  document.getElementById('memberList').appendChild(tr);
+ (w.data || []).forEach(x=>{
+  walletsData[x.member_id]=Number(x.balance || 0);
  });
 
- msg.textContent='เชื่อมต่อฐานข้อมูลสำเร็จ';
+ $('memberCount').textContent=membersData.length;
+ $('totalBalance').textContent=money(
+  Object.values(walletsData).reduce((a,b)=>a+b,0)
+ );
+ $('transactionCount').textContent=t.data?.length || 0;
+
+ renderMembers();
+ renderWalletOptions();
+ renderHistory(t.data || []);
+
+ message('dashboardMessage','เชื่อมต่อฐานข้อมูลสำเร็จ');
 }
 
-db.auth.getSession().then(({data})=>{
- if(data.session) showDashboard();
+// DISPLAY MEMBERS
+async function renderMembers(){
+ const keyword=$('search').value.trim().toLowerCase();
+
+ const filtered=membersData.filter(m=>
+  [m.member_no,m.full_name,m.phone]
+   .some(v=>String(v || '').toLowerCase().includes(keyword))
+ );
+
+ const tbody=$('memberList');
+ tbody.innerHTML='';
+
+ for(const m of filtered){
+  const tier=tiersData.find(x=>x.id===m.tier_id);
+  const tr=document.createElement('tr');
+
+  const photoCell=document.createElement('td');
+  const img=document.createElement('img');
+  img.className='member-photo';
+
+  if(m.photo_path){
+   const {data}=await db.storage.from(BUCKET)
+    .createSignedUrl(m.photo_path,3600);
+   if(data?.signedUrl) img.src=data.signedUrl;
+  }
+  photoCell.appendChild(img);
+  tr.appendChild(photoCell);
+
+  [
+   m.member_no,
+   m.full_name,
+   m.phone,
+   tier?.name || '-',
+   money(walletsData[m.id])
+  ].forEach(v=>{
+   const td=document.createElement('td');
+   td.textContent=v || '-';
+   tr.appendChild(td);
+  });
+
+  const action=document.createElement('td');
+  const btn=document.createElement('button');
+  btn.textContent='เลือก';
+  btn.onclick=()=>{
+   $('walletMember').value=m.id;
+   $('walletMember').scrollIntoView({behavior:'smooth'});
+  };
+  action.appendChild(btn);
+  tr.appendChild(action);
+  tbody.appendChild(tr);
+ }
+
+ if(!filtered.length){
+  tbody.innerHTML='<tr><td colspan="7">ไม่พบสมาชิก</td></tr>';
+ }
+}
+
+// WALLET SELECT
+function renderWalletOptions(){
+ const select=$('walletMember');
+ const old=select.value;
+
+ select.innerHTML='<option value="">เลือกสมาชิก</option>';
+
+ membersData.forEach(m=>{
+  const op=document.createElement('option');
+  op.value=m.id;
+  op.textContent=m.member_no+' - '+m.full_name;
+  select.appendChild(op);
+ });
+
+ if(membersData.some(m=>m.id===old)) select.value=old;
+}
+
+// ADD MEMBER
+async function addMember(){
+ const member_no=$('memberNo').value.trim();
+ const full_name=$('fullName').value.trim();
+ const phone=$('phone').value.trim();
+ const tier_id=$('tier').value;
+ const photo=$('photo').files[0];
+
+ if(!member_no || !full_name || !phone || !tier_id){
+  message('addMessage','กรุณากรอกข้อมูลให้ครบทุกช่อง');
+  return;
+ }
+
+ if(membersData.some(m=>m.member_no===member_no)){
+  message('addMessage','รหัสสมาชิกนี้มีอยู่แล้ว');
+  return;
+ }
+
+ if(photo && !['image/jpeg','image/png','image/webp'].includes(photo.type)){
+  message('addMessage','กรุณาเลือกไฟล์ JPG, PNG หรือ WEBP');
+  return;
+ }
+
+ if(photo && photo.size>5*1024*1024){
+  message('addMessage','รูปภาพต้องมีขนาดไม่เกิน 5 MB');
+  return;
+ }
+
+ message('addMessage','กำลังบันทึกสมาชิก...');
+
+ const {data:member,error}=await db.from('members')
+  .insert({
+   member_no,
+   full_name,
+   phone,
+   tier_id,
+   owner_user_id:currentUser.id,
+   status:'active'
+  })
+  .select()
+  .single();
+
+ if(error){
+  message('addMessage','บันทึกไม่สำเร็จ: '+error.message);
+  return;
+ }
+
+ if(photo){
+  const ext=photo.name.split('.').pop().toLowerCase();
+  const path=currentUser.id+'/'+member.id+'.'+ext;
+
+  const {error:uploadError}=await db.storage.from(BUCKET)
+   .upload(path,photo,{upsert:true,contentType:photo.type});
+
+  if(uploadError){
+   message('addMessage',
+    'เพิ่มสมาชิกแล้ว แต่การอัปโหลดรูปไม่สำเร็จ: '+uploadError.message);
+   await refreshData();
+   return;
+  }
+
+  const {error:updateError}=await db.from('members')
+   .update({photo_path:path})
+   .eq('id',member.id);
+
+  if(updateError){
+   message('addMessage',
+    'เพิ่มสมาชิกและอัปโหลดรูปแล้ว แต่บันทึกตำแหน่งรูปไม่สำเร็จ: '+updateError.message);
+   await refreshData();
+   return;
+  }
+ }
+
+ $('memberNo').value='';
+ $('fullName').value='';
+ $('phone').value='';
+ $('tier').value='';
+ $('photo').value='';
+ $('preview').style.display='none';
+
+ message('addMessage','เพิ่มสมาชิกสำเร็จ');
+ await refreshData();
+}
+
+// PHOTO PREVIEW
+$('photo').addEventListener('change',()=>{
+ const file=$('photo').files[0];
+ const preview=$('preview');
+
+ if(file){
+  preview.src=URL.createObjectURL(file);
+  preview.style.display='block';
+ }else{
+  preview.style.display='none';
+ }
+});
+
+// TOPUP / SPEND
+async function postTransaction(){
+ const member_id=$('walletMember').value;
+ const type=$('transactionType').value;
+ const amount=Number($('amount').value);
+ const note=$('note').value.trim();
+
+ if(!member_id || !amount || amount<=0){
+  message('walletMessage','กรุณาเลือกสมาชิกและกรอกจำนวนเงินให้ถูกต้อง');
+  return;
+ }
+
+ if(type==='spend' && amount>walletsData[member_id]){
+  message('walletMessage','ยอดเงินคงเหลือไม่เพียงพอ');
+  return;
+ }
+
+ message('walletMessage','กำลังบันทึกธุรกรรม...');
+
+ const {data,error}=await db.rpc('post_member_transaction',{
+  p_member_id:member_id,
+  p_type:type,
+  p_amount:amount,
+  p_note:note || null
+ });
+
+ if(error){
+  message('walletMessage','บันทึกไม่สำเร็จ: '+error.message);
+  return;
+ }
+
+ $('amount').value='';
+ $('note').value='';
+
+ message('walletMessage','บันทึกธุรกรรมสำเร็จ');
+ await refreshData();
+}
+
+// TRANSACTION HISTORY
+function renderHistory(rows){
+ const tbody=$('historyList');
+ tbody.innerHTML='';
+
+ rows.forEach(x=>{
+  const member=membersData.find(m=>m.id===x.member_id);
+  const tr=document.createElement('tr');
+
+  const date=new Date(x.created_at).toLocaleString('th-TH');
+
+  [
+   date,
+   member?.member_no || '-',
+   x.transaction_type,
+   money(x.amount),
+   money(x.balance_before),
+   money(x.balance_after),
+   x.note || '-'
+  ].forEach(v=>{
+   const td=document.createElement('td');
+   td.textContent=v;
+   tr.appendChild(td);
+  });
+
+  tbody.appendChild(tr);
+ });
+
+ if(!rows.length){
+  tbody.innerHTML='<tr><td colspan="7">ยังไม่มีธุรกรรม</td></tr>';
+ }
+}
+
+// CHECK LOGIN SESSION
+db.auth.getSession().then(async({data,error})=>{
+ if(error) return;
+
+ if(data.session){
+  currentUser=data.session.user;
+  await showDashboard();
+ }
 });
 
 db.auth.onAuthStateChange((event,session)=>{
  if(event==='SIGNED_OUT'){
-  document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('login').classList.remove('hidden');
+  currentUser=null;
+  $('dashboard').classList.add('hidden');
+  $('login').classList.remove('hidden');
  }
 });
 </script>
