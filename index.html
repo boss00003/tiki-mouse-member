@@ -523,12 +523,15 @@ async function postTransaction(){
 
  message('walletMessage','กำลังบันทึกธุรกรรม...');
 
- const {data,error}=await db.rpc('post_member_transaction',{
+
+const dbType = type === 'spend' ? 'debit' : 'credit';
+
+const {data,error}=await db.rpc('post_member_transaction',{
   p_member_id:member_id,
-  p_type:type,
+  p_type:dbType,
   p_amount:amount,
   p_note:note || null
- });
+});
 
  if(error){
   message('walletMessage','บันทึกไม่สำเร็จ: '+error.message);
