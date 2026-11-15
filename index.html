@@ -526,11 +526,11 @@ async function postTransaction(){
 
 const dbType = type === 'spend' ? 'debit' : 'credit';
 
-const {data,error}=await db.rpc('post_member_transaction',{
-  p_member_id:member_id,
-  p_type:dbType,
-  p_amount:amount,
-  p_note:note || null
+const { data, error } = await db.rpc('post_member_transaction', {
+    p_member_id: member_id,
+    p_type: dbType,
+    p_amount: amount,
+    p_note: note || null
 });
 
  if(error){
